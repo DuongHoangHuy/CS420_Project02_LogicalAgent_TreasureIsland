@@ -50,10 +50,9 @@ class Grid:
 	def is_barrier(self):
 		if self.region == SEA or self.entity in ['M', 'P']:
 			return True
-		
 		return False
-	
-	def make_mask(self):
+		
+	def make_masked(self):
 		self.is_masked = True
 
 	def draw(self, win, FONT):
