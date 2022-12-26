@@ -1,4 +1,5 @@
 import random
+import numpy
 
 # Viết 2 hàm:
 # get_hint_(number): Trả về (message, data)
@@ -39,10 +40,11 @@ class Hint_Manager:
     def get_random_hint(self):
         return random.choice(self.hints)
 
+    # HINT 1: A list of random tiles that doesn't contain the treasure (1 to 12).
     def get_hint_1(self):
-        random_quantity = random.randrange(1, 12)
+        random_quantity = random.randrange(1, 12) #(1, 13) ?
         tiles = []
-        while len(tiles) < random_quantity:
+        while len(tiles) < random_quantity: 
             tile = (random.randrange(0, self.H), random.randrange(0, self.W))
             if tile not in tiles:
                 tiles.append(tile)
@@ -55,12 +57,151 @@ class Hint_Manager:
 
         # Mask
         for loc in data:
-            map.map[loc[0]][loc[1]].make_masked()
+            map.map[loc[0]][loc[1]].make_masked() 
         return True
 
-    # def get_hint_number(self):
+    # HINT 7: A column and/or a row that contain the treasure (rare).
+    # distribution: col = row = 0.45, both = 0.1
+    def get_hint_7(self):
+        loc = (0, 0)
+        while loc == (0, 0):
+            loc = (random.randrange(0, self.H + 1), random.randrange(0, self.W + 1))
 
-    # def verify_hint_number(self, data, map):
+        choose = numpy.random.choice(numpy.arange(0, 3), p=[0.45, 0.45, 0.1])
+        if choose == 0:
+            message = "Row " + str(loc[0]) + " contains the treasure"
+        if choose == 1:
+            message = "Col " + str(loc[1]) + " contains the treasure"
+        else:
+            message = "Tile " + str(loc) + " contains the treasure"
+        loc += (choose, -1)
 
-    # def get_hint_number(self):
-    # def verify_hint_number(self, data, map):
+        return (message, loc)
+
+    def verify_hint_7(self, data, map):
+        if data[2] == 0: # row only
+            # mask
+            if self.treasure_loc[0] == data[0]:
+                for r in range(0, self.H):
+                    if r != data[0]:
+                        for c in range(0, self.W):
+                            map.map[r][c].make_masked()
+                return True
+            else:
+                for c in range(0, self.W):
+                    map.map[data[0]][c].make_masked()
+
+        if data[2] == 1: # col only
+            if self.treasure_loc[1] == data[1]:
+                for c in range(0, self.W):
+                    if c != data[1]:
+                        for r in range(0, self.H):
+                            map.map[r][c].make_masked()
+                return True
+            else:
+                for r in range(0, self.H):
+                            map.map[r][data[1]].make_masked()
+
+        if data[2] == 2: # both 
+            if self.treasure_loc[0] == data[0] and self.treasure_loc[1] == data[1]:
+                # neu tim dc vi tri treasure r thi nen lm j o day?
+                return True
+            else:
+                map.map[data[0]][data[1]].make_masked()
+
+        return False
+
+
+    # HINT 8: A column and/or a row that do not contain the treasure.
+    # distribution: col = row = 0.25, both = 0.5
+    def get_hint_8(self):
+        loc = (0, 0)
+        while loc == (0, 0):
+            loc = (random.randrange(0, self.H + 1), random.randrange(0, self.W + 1))
+        choose = numpy.random.choice(numpy.arange(0, 3), p=[0.25, 0.25, 0.5])
+        if choose == 0:
+            message = "Row " + str(loc[0]) + " does not contain the treasure"
+        if choose == 1:
+            message = "Col " + str(loc[1]) + " does not contain the treasure"
+        else:
+            message = "Tile " + str(loc) + " does not contain the treasure"
+        loc += (choose, -1)
+        return (message, loc)
+
+    def verify_hint_8(self, data, map):
+        if data[2] == 0: # row only
+            # mask
+            if self.treasure_loc[0] != data[0]:
+                for c in range(0, self.W):
+                    map.map[data[0]][c].make_masked()
+                return True
+            else:
+                for r in range(0, self.H):
+                    if r != data[0]:
+                        for c in range(0, self.W):
+                            map.map[r][c].make_masked()
+
+        if data[2] == 1: # col only
+            if self.treasure_loc[1] != data[1]:
+                for r in range(0, self.H):
+                    map.map[r][data[1]].make_masked()
+                return True
+            else:
+                for c in range(0, self.W):
+                    if c != data[1]:
+                        for r in range(0, self.H):
+                            map.map[r][c].make_masked()
+
+        if data[2] == 2: # both 
+            if self.treasure_loc[0] != data[0] and self.treasure_loc[1] != data[1]:
+                map.map[data[0]][data[1]].make_masked()
+                return True
+            else:
+                # neu tim dc vi tri treasure r thi nen lm j o day?
+                print("hmm")
+
+        return False
+
+
+    #HINT 11: The treasure is somewhere in an area bounded by 2-3 tiles from sea.
+    def get_hint_11(self):
+        quantity = random.randint(2, 3)
+        message = "The treasure is somewhere in an area bounded by " + str(quantity) + " tiles from sea"
+        return (message, quantity)
+
+    def verify_hint_12(self, data, map):
+        print("jml")
+
+    #HINT 12: A half of the map without treasure (rare).
+    def get_hint_12(self):
+        half_side = random.randint(0, 1)
+        message = "Right" if half_side else "Left"
+        message += " half does not contain the treasure"
+        return (message, half_side)
+
+    def verify_hint_12(self, data, map):
+        if data == 0: 
+            if self.treasure_loc[1] > (self.W // 2):
+                for c in range(0, self.W // 2 + 1):
+                    for r in range(0, self.H):
+                        map.map[r][c].make_masked()
+                return True
+            else:
+                for c in range(self.W // 2 + 1, self.W):
+                    for r in range(0, self.H):
+                        map.map[r][c].make_masked()
+
+        if data == 1: 
+            if self.treasure_loc[1] <= (self.W // 2): # #when equal?
+                for c in range(self.W // 2 + 1, self.W):
+                    for r in range(0, self.H):
+                        map.map[r][c].make_masked()
+                return True
+            else:
+                for c in range(0, self.W // 2 + 1):
+                    for r in range(0, self.H):
+                        map.map[r][c].make_masked()
+
+        return False
+
+        
