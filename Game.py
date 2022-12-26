@@ -1,10 +1,11 @@
 import pygame
 from Map import Map
+from Agent import Agent
 from Pirate import Pirate
 from Hint import Hint_Manager
 
 WIN_WIDTH = 1000
-WIN_HEIGHT = 640
+WIN_HEIGHT = 680
 WIN = pygame.display.set_mode((WIN_WIDTH, WIN_HEIGHT))
 pygame.display.set_caption("Treasure island")
 
@@ -12,11 +13,11 @@ class Game:
     def __init__(self, fin_path):
         global FONT
         self.import_game_data(fin_path)
-        self.map = Map(self.W, self.H, self.board)
+        self.map = Map(self.W, self.H, self.board, self.R)
         self.pirate = Pirate(self.map, (self.Tx, self.Ty), self.r, self.f)
-        self.agent = None
+        self.agent = Agent(self.map)
         self.treasure_loc = (self.Tx, self.Ty)
-        self.hint_manager = Hint_Manager(self.agent, self.pirate, self.treasure_loc, self.map, self.W, self.H)
+        self.hint_manager = Hint_Manager(self.agent, self.pirate, self.treasure_loc, self.map)
 
         self.run = True
         self.PREV_TURN = 1
@@ -43,12 +44,13 @@ class Game:
     
     def exec(self):
         while self.run:
+            self.map.map[self.Tx][self.Ty].entity = 'T'
             if self.PREV_TURN == self.CUR_TURN:
                 self.map.draw_map(WIN)
             else:
-                hint = self.hint_manager.get_random_hint()
-                print(hint.use_hint())
-                hint.is_verified(self.map)
+                hint = self.hint_manager.get_random_hint(self.CUR_TURN)
+                print(hint.use_hint()[0])
+                print(hint.is_verified())
                 self.pirate.run(self.CUR_TURN)
 
 

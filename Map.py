@@ -1,19 +1,20 @@
 import pygame
 from Grid import Grid
 
-MAP_WIDTH = 640
-MAP_HEIGHT = 640
+GRID_WIDTH = 10
+GRID_HEIGHT = 10
 
 WHITE = (255, 255, 255)
-SILVER = (212, 212, 212)
+SILVER = (168, 169, 174)
 
 
 class Map:
-    def __init__(self, W, H, board):
+    def __init__(self, W, H, board, R):
         self.W = W
         self.H = H
+        self.R = R
         self.map = self.make_map(W, H, board)
-        self.FONT = pygame.font.SysFont('Arial', MAP_HEIGHT//H)
+        self.FONT = pygame.font.SysFont('Arial', GRID_HEIGHT-1)
         
     
     def make_map(self, W, H, board):
@@ -21,8 +22,8 @@ class Map:
         for i in range(H):
             grids.append([])
             for j in range(W):
-                w_grid = MAP_WIDTH / W
-                h_grid = MAP_HEIGHT / H
+                w_grid = GRID_WIDTH
+                h_grid = GRID_HEIGHT
                 grids[i].append(Grid(i, j, w_grid, h_grid, board[i][j]))
         
         return grids
@@ -36,8 +37,8 @@ class Map:
             for grid in row:
                 grid.draw(WIN, self.FONT)
 
-        gap_row = MAP_HEIGHT / self.H
-        gap_col = MAP_WIDTH / self.W
+        gap_row = GRID_WIDTH
+        gap_col = GRID_HEIGHT
         # number list
         for i in range(self.W):
             text = self.FONT.render(str(i), True, (0,0,0))
@@ -50,9 +51,9 @@ class Map:
             WIN.blit(text, center_rect)
             
         #Draw line
-        for i in range(self.H+1):
-            pygame.draw.line(WIN, SILVER, (0, i * gap_row), (MAP_WIDTH + gap_col, i * gap_row))
-            for j in range(self.W+1):
-                pygame.draw.line(WIN, SILVER, (j * gap_col, 0), (j * gap_col, MAP_HEIGHT + gap_row))
+        for i in range(self.H+2):
+            pygame.draw.line(WIN, SILVER, (0, i * gap_row), (GRID_WIDTH*(self.W+1), i * gap_row))
+            for j in range(self.W+2):
+                pygame.draw.line(WIN, SILVER, (j * gap_col, 0), (j * gap_col, GRID_HEIGHT*(self.H+1)))
 
         pygame.display.update()

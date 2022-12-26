@@ -1,14 +1,16 @@
 from queue import PriorityQueue
 from copy import deepcopy
 import random
-import pygame 
+import pygame
+import math
 
-DIRECTIONS = [(-1, 0), (1, 0), (0, 1), (0, -1)]
+DIRECTIONS = {(-1, 0): 'North', (1, 0): 'South', (0, 1): 'East', (0, -1): 'West'}
 
 class Pirate:
     def __init__(self, map, treasure_loc, turn_reveal, turn_escape):
         self.map = map
         self.initial_loc = self.get_random_prison()
+        print(self.initial_loc)
         self.current_loc = self.initial_loc #self.initialize_location()
         self.treasure_loc = treasure_loc
         self.turn_reveal = turn_reveal
@@ -26,9 +28,22 @@ class Pirate:
             print('Pirate is free')
         
         dest = self.path_instruction.pop()
-        self.map.map[self.current_loc[0]][self.current_loc[1]].entity = None
+        if self.current_loc is not self.initial_loc:
+            self.map.map[self.current_loc[0]][self.current_loc[1]].entity = None
+        self.map.map[dest[0]][dest[1]].entity = 'Pi'
+        
+        cor_x = dest[0] - self.current_loc[0]
+        cor_y = dest[1] - self.current_loc[1]
+        step = abs(cor_x) + abs(cor_y)
+        if cor_x % 2 == 0:
+            cor_x //= 2
+        if cor_y % 2 == 0:
+            cor_y //= 2
+
+        direct = DIRECTIONS[(cor_x, cor_y)]
+        print('Pirate moves '+ str(step) + ' steps to the ' + direct)
         self.current_loc = deepcopy(dest)
-        self.map.map[self.current_loc[0]][self.current_loc[1]].entity = 'Pi'
+
     
     def get_random_prison(self):
         prisons = []
@@ -63,7 +78,7 @@ class Pirate:
 
     def reconstruct_path(self, came_from, current):
         path = [current]
-        while current in came_from:
+        while came_from[current] is not self.initial_loc:
             path.append(came_from[current])
             current = came_from[current]
         return path
@@ -87,7 +102,6 @@ class Pirate:
 
             current = open_set.get()[2]
             closed_set.append(current)
-
             if current == self.treasure_loc:
                 return self.reconstruct_path(came_from, current)
 

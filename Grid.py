@@ -1,26 +1,27 @@
 import pygame
 pygame.init()
 
-# AGENT = (255, 0, 0) #AGENT
-# PIRATE = (0, 255, 0) #PIRATE
-# GOLD = (255, 255, 0) #GOLD
+AGENT = (198, 81, 97) #AGENT
+PIRATE = (214, 16, 16) #PIRATE
+GOLD = (250, 211, 82) #GOLD
 
-MASKED = (128, 128, 128) #MASKED
-SEA = (100, 149, 237) #SEA
 MOUNTAIN = (0, 0, 0) # MOUNTAIN
-PRISON = (0, 0, 128) #PRISON
+PRISON = (0, 0, 128) # PRISON
 
-OLIVE = (128, 128, 0)
-GREEN = (0, 128, 0)
-TEAL = (0, 128, 128)
-BROWN = (165,42,42)
-C1 = (230, 207, 212)
-C2 = (199, 175, 196)
-C3 = (121, 111, 140)
-C4 = (193, 138, 129)
-C5 = (255, 218, 176)
-C6 = (243, 220, 190)
-REGIONS = [SEA, OLIVE, GREEN, TEAL, C1, C2, C3, C4, C5, C6]
+MASKED = (128, 128, 128) # MASKED
+SEA = (61, 146, 194) # SEA
+C1 = (183, 169, 204)
+C2 = (140, 101, 134)
+C3 = (214, 172, 139)
+C4 = (98, 138, 113)
+C5 = (184, 155, 150)
+C6 = (160, 154, 86)
+C7 = (161, 128, 96)
+C8 = (189, 123, 55)
+C9 = (93, 115, 78)
+C10 = (168, 188, 172)
+
+REGIONS = [SEA, C1, C2, C3, C4, C5, C6, C7, C8, C9, C10]
 
 
 class Grid:
@@ -51,16 +52,39 @@ class Grid:
 		if self.region == SEA or self.entity in ['M', 'P']:
 			return True
 		return False
+
+	def is_mountain(self):
+		if self.entity == 'M':
+			return True
+		return False
+	
+	def is_sea(self):
+		if self.region == SEA:
+			return True
+		return False 
 		
 	def make_masked(self):
 		self.is_masked = True
 
 	def draw(self, win, FONT):
-		color = self.region
+		region_color = self.region
 		if self.is_masked:
-			color = MASKED
-		pygame.draw.rect(win, color, (self.x, self.y, self.width, self.height))
-		text = FONT.render(self.entity, True, (0,0,0))
+			region_color = MASKED
+		pygame.draw.rect(win, region_color, (self.x, self.y, self.width, self.height))
+
+		entity_color = (0,0,0)
+		if self.entity == 'T':
+			entity_color = GOLD
+		elif self.entity == 'A':
+			entity_color = AGENT
+		elif self.entity == 'Pi':
+			entity_color = PIRATE
+		elif self.entity == 'P':
+			entity_color = PRISON
+		elif self.entity == 'M':
+			entity_color = MOUNTAIN
+
+		text = FONT.render(self.entity, True, entity_color)
 		center_rect = (self.x + self.width/2 - text.get_rect().width/2, 
 					   self.y + self.height/2 - text.get_rect().height/2)
 		win.blit(text, center_rect)
