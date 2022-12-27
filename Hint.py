@@ -104,7 +104,10 @@ class Hint_Manager:
 
         if data[2] == 2: # both 
             if self.treasure_loc[0] == data[0] and self.treasure_loc[1] == data[1]:
-                # neu tim dc vi tri treasure r thi nen lm j o day?
+                for r in range(0, self.W):
+                    for c in range(0, self.H):
+                        if (r,c) != self.treasure_loc:
+                            map.map[r][c].make_masked()
                 return True
             else:
                 map.map[data[0]][data[1]].make_masked()
@@ -157,8 +160,10 @@ class Hint_Manager:
                 map.map[data[0]][data[1]].make_masked()
                 return True
             else:
-                # neu tim dc vi tri treasure r thi nen lm j o day?
-                print("hmm")
+                for r in range(0, self.W):
+                    for c in range(0, self.H):
+                        if (r,c) != self.treasure_loc:
+                            map.map[r][c].make_masked()
 
         return False
 
@@ -170,7 +175,21 @@ class Hint_Manager:
         return (message, quantity)
 
     def verify_hint_12(self, data, map):
-        print("jml")
+        frontier = []
+        for r in range(0, self.W):
+            for c in range(0, self.H):
+                if map.map[r + data][c + data].region == SEA or map.map[r + data][c - data].region == SEA or map.map[r - data][c + data].region == SEA or map.map[r - data][c - data].region == SEA and map.map[r][c].region != SEA:
+                    frontier.append((r, c))
+        if self.treasure_loc in frontier:
+            for r in range(0, self.W):
+                for c in range(0, self.H):
+                    if (r, c) not in frontier:
+                        map.map[r][c].make_masked()
+            return True
+
+        for item in frontier:
+            map.map[item[0]][item[1]].make_masked()
+        return False
 
     #HINT 12: A half of the map without treasure (rare).
     def get_hint_12(self):
