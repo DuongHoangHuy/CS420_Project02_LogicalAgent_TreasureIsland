@@ -10,7 +10,6 @@ class Pirate:
     def __init__(self, map, treasure_loc, turn_reveal, turn_escape):
         self.map = map
         self.initial_loc = self.get_random_prison()
-        print(self.initial_loc)
         self.current_loc = self.initial_loc #self.initialize_location()
         self.treasure_loc = treasure_loc
         self.turn_reveal = turn_reveal
@@ -19,13 +18,13 @@ class Pirate:
 
     def run(self, CUR_TURN):
         if CUR_TURN < self.turn_reveal:
-            return
+            return ''
         if CUR_TURN == self.turn_reveal:
-            print('Pirate is in prison ' + str(self.initial_loc))
+            return 'Pirate is in prison ' + str(self.initial_loc)
         if CUR_TURN < self.turn_escape:
-            return
+            return ''
         if CUR_TURN == self.turn_escape:
-            print('Pirate is free')
+            return 'Pirate is free'
         
         dest = self.path_instruction.pop()
         if self.current_loc is not self.initial_loc:
@@ -41,8 +40,8 @@ class Pirate:
             cor_y //= 2
 
         direct = DIRECTIONS[(cor_x, cor_y)]
-        print('Pirate moves '+ str(step) + ' steps to the ' + direct)
         self.current_loc = deepcopy(dest)
+        return 'Pirate moves '+ str(step) + ' steps to the ' + direct
 
     
     def get_random_prison(self):

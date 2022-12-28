@@ -1,8 +1,6 @@
 import pygame
 from Grid import Grid
-
-GRID_WIDTH = 10
-GRID_HEIGHT = 10
+from constant import MAP_H, MAP_W, GRID_H, GRID_W
 
 WHITE = (255, 255, 255)
 SILVER = (168, 169, 174)
@@ -10,25 +8,31 @@ SILVER = (168, 169, 174)
 
 class Map:
     def __init__(self, W, H, board, R):
+        global GRID_W, GRID_H
+        GRID_W = MAP_W // W
+        GRID_H = MAP_H // H
         self.W = W
         self.H = H
         self.R = R
         self.map = self.make_map(W, H, board)
-        self.FONT = pygame.font.SysFont('Arial', GRID_HEIGHT-1)
+        self.FONT = pygame.font.SysFont('Arial', GRID_H-1)
         
-    
     def make_map(self, W, H, board):
         grids = []
         for i in range(H):
             grids.append([])
             for j in range(W):
-                w_grid = GRID_WIDTH
-                h_grid = GRID_HEIGHT
+                w_grid = GRID_W
+                h_grid = GRID_H
                 grids[i].append(Grid(i, j, w_grid, h_grid, board[i][j]))
-        
-        return grids
-        
 
+        return grids
+
+    def reset_map(self):
+        for row in range(self.H):
+            for col in range(self.W):
+                if self.map[row][col].is_masked:
+                    self.map[row][col].is_masked = False
     
     def draw_map(self, WIN):
         WIN.fill(WHITE)
@@ -37,8 +41,8 @@ class Map:
             for grid in row:
                 grid.draw(WIN, self.FONT)
 
-        gap_row = GRID_WIDTH
-        gap_col = GRID_HEIGHT
+        gap_row = GRID_W
+        gap_col = GRID_H
         # number list
         for i in range(self.W):
             text = self.FONT.render(str(i), True, (0,0,0))
@@ -52,8 +56,8 @@ class Map:
             
         #Draw line
         for i in range(self.H+2):
-            pygame.draw.line(WIN, SILVER, (0, i * gap_row), (GRID_WIDTH*(self.W+1), i * gap_row))
+            pygame.draw.line(WIN, SILVER, (0, i * gap_row), (GRID_W*(self.W+1), i * gap_row))
             for j in range(self.W+2):
-                pygame.draw.line(WIN, SILVER, (j * gap_col, 0), (j * gap_col, GRID_HEIGHT*(self.H+1)))
+                pygame.draw.line(WIN, SILVER, (j * gap_col, 0), (j * gap_col, GRID_H*(self.H+1)))
 
-        pygame.display.update()
+        # pygame.display.update()
