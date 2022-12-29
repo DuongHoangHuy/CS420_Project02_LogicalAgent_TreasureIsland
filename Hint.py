@@ -139,8 +139,72 @@ class Hint_Manager:
         for region in data:
             self.make_masked_region(region)
         return False
+    #HINT 4: A large rectangle area that has the treasure.
+    def get_hint_4(self):
+        top_rec, left_rec, size_rec = None, None, None
+        SIZE_MIN = self.map.H // 2
+        while True:
+            top_rec = random.randrange(0, self.map.H)
+            left_rec = random.randrange(0, self.map.W)
+            size_rec = random.randrange(SIZE_MIN, self.map.W)
+            if top_rec + size_rec < self.map.H and left_rec + size_rec < self.map.W:
+                break
 
-    
+        cor_rec = [top_rec, left_rec, top_rec + size_rec, left_rec + size_rec]
+        message = 'The treasure is somewhere inside the large rectangle (top, left, bottom, right) ' + str(cor_rec)
+        return (message, cor_rec)
+
+    def verify_hint_4(self, data):
+        cor_rec = data
+        t_row, t_col = self.treasure_loc
+        if t_row in range(cor_rec[0], cor_rec[2] + 1) and t_col in range(cor_rec[1], cor_rec[3]+1):
+            for row in range(0, self.map.H):
+                for col in range(0, self.map.W):
+                    if row in range(cor_rec[0], cor_rec[2] + 1) and col in range(cor_rec[1], cor_rec[3]+1):
+                        continue
+                    self.map.map[row][col].make_masked()
+            return True
+
+        for row in range(0, self.map.H):
+            for col in range(0, self.map.W):
+                if row in range(cor_rec[0], cor_rec[2] + 1) and col in range(cor_rec[1], cor_rec[3]+1):
+                    self.map.map[row][col].make_masked()
+        return False
+
+    #HINT 5: A small rectangle area that doesn't has the treasure.
+    def get_hint_5(self):
+        top_rec, left_rec, size_rec = None, None, None
+        SIZE_MAX = self.map.H // 4
+        while True:
+            top_rec = random.randrange(0, self.map.H)
+            left_rec = random.randrange(0, self.map.W)
+            size_rec = random.randrange(1, SIZE_MAX)
+            if top_rec + size_rec < self.map.H and left_rec + size_rec < self.map.W:
+                break
+
+        cor_rec = [top_rec, left_rec, top_rec + size_rec, left_rec + size_rec]
+        message = 'The treasure is somewhere outside the small rectangle (top, left, bottom, right) ' + str(cor_rec)
+        return (message, cor_rec)
+
+    def verify_hint_5(self, data):
+        cor_rec = data
+        t_row, t_col = self.treasure_loc
+        if t_row in range(cor_rec[0], cor_rec[2] + 1) and t_col in range(cor_rec[1], cor_rec[3]+1):
+            for row in range(0, self.map.H):
+                for col in range(0, self.map.W):
+                    if row in range(cor_rec[0], cor_rec[2] + 1) and col in range(cor_rec[1], cor_rec[3]+1):
+                        continue
+                    self.map.map[row][col].make_masked()
+            return False
+
+        for row in range(0, self.map.H):
+            for col in range(0, self.map.W):
+                if row in range(cor_rec[0], cor_rec[2] + 1) and col in range(cor_rec[1], cor_rec[3]+1):
+                    self.map.map[row][col].make_masked()
+        return True
+           
+
+    #HINT 6:
     def get_hint_6(self):
         message = "Agent is the nearest person to the treasure"
         return [message, None]
