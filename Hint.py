@@ -93,6 +93,54 @@ class Hint_Manager:
             self.map.map[loc[0]][loc[1]].make_masked()
         return True
     
+    #HINT 2: 2-5 regions that 1 of them has the treasure.
+    def make_masked_region(region):
+        
+
+    def get_hint_2(self):
+        random_quantity = random.randrange(2, 5)
+        regions = []
+        while len(regions) < random_quantity:
+            region = (random.randrange(0,10-1))
+            if region not in regions:
+                regions.append(region)
+        message = str(regions) + " regions that 1 of them has the treasure."
+        return (message, regions)
+
+    def verify_hint_2(self, data):
+        if self.treasure_region in data:
+            for region in range(self.map.region):
+                if region not in data:
+                    self.make_masked_region(region)
+            return True
+
+        for region in data:
+            self.make_masked_region(region)
+        return False
+
+    #HINT 3: 1-3 regions that do not contain the treasure.
+    def get_hint_3(self):
+        random_quantity = random.randrange(1, 3)
+        regions = []
+        while len(regions) < random_quantity:
+            region = (random.randrange(0,10-1))
+            if region not in regions:
+                regions.append(region)
+        message = str(regions) + " regions that do not contain the treasure."
+        return (message, regions)
+
+    def verify_hint_3(self, data):
+        if self.treasure_region in data:
+            for region in range(self.map.region):
+                if region not in data:
+                    self.make_masked_region(region)
+            return True
+
+        for region in data:
+            self.make_masked_region(region)
+        return False
+
+    
     def get_hint_6(self):
         message = "Agent is the nearest person to the treasure"
         return [message, None]
