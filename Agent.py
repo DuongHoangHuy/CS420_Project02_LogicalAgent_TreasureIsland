@@ -43,7 +43,6 @@ class Agent:
 
         if self.found_treasure:
             message += '\n' + 'Agent found the treasure, Agent won!'
-        print(message)
         return message
 
     
@@ -151,10 +150,9 @@ class Agent:
 
         return message
     
-    def generate_potential_locs(self, loc):
+    def generate_potential_locs(self, loc, steps):
         locs = set()
-        steps = [3,4]
-        R = self.map.H // 2
+        R = self.map.H
         for step in steps:
             for row in range(loc[0] - R // 2, loc[0] + R //2, step):
                 for col in range(loc[1] - R // 2, loc[1] + R //2, step):
@@ -183,12 +181,12 @@ class Agent:
 
         # If no more:
         if not len(self.potential_locs):
-            print('Generate')
-            self.generate_potential_locs(generate_target)
+            self.generate_potential_locs(generate_target, [2])
 
         # Checking direct
         pirate_direct = self.pirate.get_current_direct()
         if pirate_direct:
+            removed_lst = set()
             self.track_pirate_directs.append(pirate_direct)
             directs = list(Counter(self.track_pirate_directs).keys())
             fre = list(Counter(self.track_pirate_directs).values())
@@ -197,26 +195,51 @@ class Agent:
             for i in range(len(fre)):
                 if fre[i] == max_fre:
                     direct_with_max_fre.append(directs[i])
+                    break
 
             # Remove the one not in direct
+            print(f'Before: {self.potential_locs}, pirate: {self.pirate.current_loc}, accepted direct: {direct_with_max_fre}')
             for loc in self.potential_locs:
                 for accepted_direct in direct_with_max_fre:
                     if not self.test(self.pirate.current_loc, loc, accepted_direct):
-                        print('Remove by direct', self.pirate.current_loc, loc, accepted_direct)
-                        self.potential_locs.difference_update(set(loc))
+                        removed_lst.add(loc)
+            self.potential_locs.difference_update(removed_lst)
+            print('After: ', self.potential_locs)
+        
+        if not len(self.potential_locs):
+            self.generate_potential_locs(generate_target, [1])
+        
+        # Checking direct
+        pirate_direct = self.pirate.get_current_direct()
+        if pirate_direct:
+            removed_lst = set()
+            self.track_pirate_directs.append(pirate_direct)
+            directs = list(Counter(self.track_pirate_directs).keys())
+            fre = list(Counter(self.track_pirate_directs).values())
+            max_fre = max(fre)
+            direct_with_max_fre = []
+            for i in range(len(fre)):
+                if fre[i] == max_fre:
+                    direct_with_max_fre.append(directs[i])
+                    break
+
+            # Remove the one not in direct
+            print(f'Before: {self.potential_locs}, pirate: {self.pirate.current_loc}, accepted direct: {direct_with_max_fre}')
+            for loc in self.potential_locs:
+                for accepted_direct in direct_with_max_fre:
+                    if not self.test(self.pirate.current_loc, loc, accepted_direct):
+                        removed_lst.add(loc)
+            self.potential_locs.difference_update(removed_lst)
+            print('After: ', self.potential_locs)
 
         
         potential_score = {}
         for potential_loc in self.potential_locs:
             potential_score[potential_loc] = abs(compare_loc[0] - potential_loc[0]) + abs(compare_loc[1] - potential_loc[1])
         
-        # WHAT IF NO MORE DANGER PRISON ?
-        # print(potential_score)
-            
         potential_score = dict(sorted(potential_score.items(), key=lambda item: item[1]))
          
         self.potential_loc = next(iter(potential_score))
-        print(self.potential_loc, potential_score)
 
         self.current_path = astar(self.current_loc, self.potential_loc, self.map, [1,2,3,4])
 
@@ -264,29 +287,43 @@ class Agent:
     
     
     def test(self, pirate_current_loc, loc, accepted_direct):
-            f1 = None  #True is greater
-            f2 = None
-            if accepted_direct == 'East':
-                f1 = 1
-                f2 = 1
-            elif accepted_direct == 'West':
-                f1 = -1
-                f2  = -1
-            elif accepted_direct == 'North':
-                f1 = 1
-                f2 = -1
-            elif accepted_direct == 'South':
-                f1 = -1
-                f2 = 1
+            # f1 = None  #True is greater
+            # f2 = None
+            # if accepted_direct == 'East':
+            #     f1 = 1
+            #     f2 = 1
+            # elif accepted_direct == 'West':
+            #     f1 = -1
+            #     f2  = -1
+            # elif accepted_direct == 'North':
+            #     f1 = 1
+            #     f2 = -1
+            # elif accepted_direct == 'South':
+            #     f1 = -1
+            #     f2 = 1
             
-            def func(cor, f1, f2, loc): # True is in
-                l1 = (loc[1] - cor[1]) - (loc[0] - cor[0])
-                l2 = (loc[1] - cor[1]) + (loc[0] - cor[0])
-                if l1*f1 >= 0 and l2*f2 >= 0:
-                    return True
-                return False
+            # def func(cor, f1, f2, loc): # True is in
+            #     l1 = (loc[1] - cor[1]) - (loc[0] - cor[0])
+            #     l2 = (loc[1] - cor[1]) + (loc[0] - cor[0])
+            #     if l1*f1 >= 0 and l2*f2 >= 0:
+            #         return True
+            #     return False
             
-            if not func(pirate_current_loc , f1, f2, loc):
-                return False
+            # if not func(pirate_current_loc , f1, f2, loc):
+            #     return False
 
-            return True  
+            # return True
+
+        if accepted_direct == 'East':
+            if loc[1] < pirate_current_loc[1]:
+                return False
+        elif accepted_direct == 'West':
+            if loc[1] > pirate_current_loc[1]:
+                return False
+        elif accepted_direct == 'North':
+            if loc[0] > pirate_current_loc[0]:
+                return False
+        elif accepted_direct == 'South':
+            if loc[0] < pirate_current_loc[0]:
+                return False
+        return True
