@@ -23,7 +23,6 @@ class Agent:
         self.small_step = 2
         self.large_step = 4
 
-
         # Befor ereveal
         self.potential_locs = set(self.map.prisons)
         self.potential_loc = None
@@ -34,21 +33,21 @@ class Agent:
         message = ''
         if cur_turn == self.pirate.turn_reveal:
             self.potential_locs.difference_update(set(self.map.prisons))
-            print(self.potential_locs)
 
         if cur_turn < self.pirate.turn_reveal:
-            message += self.func_2(self.potential_loc, self.current_loc, cur_turn)
+            message += '\n' + self.func_2(self.current_loc, self.current_loc, cur_turn)
         elif cur_turn < self.pirate.turn_escape:
-            message += self.func_2(self.pirate.initial_loc, self.current_loc, cur_turn)
-        else: # Pirate free
+            message += '\n' + self.func_2(self.pirate.initial_loc, self.pirate.initial_loc, cur_turn)
+        else:
+            message += '\n' + self.func_2(self.pirate.current_loc, self.pirate.current_loc, cur_turn)
 
-            message += self.func_2(self.pirate.current_loc, self.pirate.current_loc, cur_turn)
-        # else:
-
-        return f'Current potential: {self.potential_loc}'
+        if self.found_treasure:
+            message += '\n' + 'Agent found the treasure, Agent won!'
+        print(message)
+        return message
 
     
-    def draw(self, win, cur_turn):
+    def draw(self, win):
         AGENT = (214, 16, 16) # AGENT
         x = (self.current_loc[1] + 3/2) * self.map.grid_w
         y = (self.current_loc[0] + 3/2)* self.map.grid_h
@@ -136,20 +135,21 @@ class Agent:
             return (step, (x, y))
     
     def func_1(self):
+        message = ''
         if len(self.current_path) > 1:
-            self.verify_hint()
+            message += '\n' + self.verify_hint()
         if len(self.current_path):
             dest = self.current_path.pop()
             step, direct = self.find_step_direct(self.current_loc, dest)
 
             if step in [1,2]:
-                self.small_move_scan(step, direct)
+                message += '\n' + self.small_move_scan(step, direct)
             elif step in [3,4]:
-                self.large_move(step, direct)
+                message += '\n' + self.large_move(step, direct)
         if len(self.current_path) == 0:
-            self.large_scan()
+            message += '\n' + self.large_scan()
 
-        return ''
+        return message
     
     def generate_potential_locs(self, loc):
         locs = set()
@@ -172,9 +172,6 @@ class Agent:
         #         print('No update')
         #         return
         
-        if not len(self.potential_locs):
-            self.generate_potential_locs(generate_target)
-        
         self.compare_loc = compare_loc
         removed_lst = set()
         for potential_loc in self.potential_locs:
@@ -183,6 +180,11 @@ class Agent:
         
         # Current potential without checking direct
         self.potential_locs.difference_update(removed_lst)
+
+        # If no more:
+        if not len(self.potential_locs):
+            print('Generate')
+            self.generate_potential_locs(generate_target)
 
         # Checking direct
         pirate_direct = self.pirate.get_current_direct()
@@ -200,6 +202,7 @@ class Agent:
             for loc in self.potential_locs:
                 for accepted_direct in direct_with_max_fre:
                     if not self.test(self.pirate.current_loc, loc, accepted_direct):
+                        print('Remove by direct', self.pirate.current_loc, loc, accepted_direct)
                         self.potential_locs.difference_update(set(loc))
 
         
@@ -211,16 +214,15 @@ class Agent:
         # print(potential_score)
             
         potential_score = dict(sorted(potential_score.items(), key=lambda item: item[1]))
-        if not len(potential_score):
-            self.potential_loc = self.current_loc
-            print('LOIIII percept rong')
-        else:            
-            self.potential_loc = next(iter(potential_score))
+         
+        self.potential_loc = next(iter(potential_score))
+        print(self.potential_loc, potential_score)
+
         self.current_path = astar(self.current_loc, self.potential_loc, self.map, [1,2,3,4])
 
     
     def func_2(self, generate_target, update_percept_target, cur_turn):
-
+        message = ''
         self.update_percept(generate_target, update_percept_target)
         total_turn = len(self.current_path)
 
@@ -234,7 +236,7 @@ class Agent:
         
         # Close enough:
         if total_turn < turn_remain:
-            self.func_1()
+            message += '\n' + self.func_1()
         # Far enough
         elif (total_turn // 2) + 1 < turn_remain:
             for i in range(2):
@@ -242,23 +244,23 @@ class Agent:
                     dest = self.current_path.pop()
                     step, direct = self.find_step_direct(self.current_loc, dest)
                     if step in [1,2]:
-                        self.small_move_scan(step, direct)
+                        message += '\n' + self.small_move_scan(step, direct)
                     else:
-                        self.large_move(step, direct)
+                        message += '\n' + self.large_move(step, direct)
                 else:
-                    self.large_scan()
+                    message += '\n' + self.large_scan()
         # Too far
         else:
             if not self.is_used_teleport:
                 print('tele')
-                self.teleport(self.potential_loc)
+                message += '\n' + self.teleport(self.potential_loc)
                 self.update_percept(generate_target, update_percept_target, True)
                 self.is_used_teleport = True
-                self.func_1()
+                message += '\n' + self.func_1()
             else:
-                self.func_1()
+                message += '\n' + self.func_1()
         
-        return ''
+        return message
     
     
     def test(self, pirate_current_loc, loc, accepted_direct):

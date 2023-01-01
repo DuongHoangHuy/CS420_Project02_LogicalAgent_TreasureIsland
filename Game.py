@@ -52,7 +52,7 @@ class Game:
     
     def exec(self):
         print('Loi export: ', self.CUR_TURN)
-        self.logger.recieve_message(f'Game start\n> The pirate’s prison is going to reveal the at the beginning of the turn {self.pirate.turn_reveal}\n> The pirate is free at the beginning of the turn {self.pirate.turn_escape}', self.CUR_TURN)
+        self.logger.recieve_message(f'Game start\nThe pirate’s prison is going to reveal the at the beginning of the turn {self.pirate.turn_reveal}\n>The pirate is free at the beginning of the turn {self.pirate.turn_escape}', self.CUR_TURN)
         next_turn = False
         while self.run:
             if not self.is_gameover:
@@ -70,7 +70,7 @@ class Game:
 
             self.map.draw_map(WIN)
             self.pirate.draw(WIN, self.CUR_TURN)
-            self.agent.draw(WIN, self.CUR_TURN)
+            self.agent.draw(WIN)
             self.logger.draw(self.CUR_TURN, WIN)
             pygame.display.update()
 

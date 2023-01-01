@@ -62,7 +62,7 @@ class Grid:
 
 		entity_color = (0,0,0)
 		if self.entity == 'T':
-			entity_color = GOLD
+			entity_color = region_color #GOLD
 		elif self.entity == 'P':
 			entity_color = PRISON
 		elif self.entity == 'M':

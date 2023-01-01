@@ -23,11 +23,15 @@ class Logger:
         f.close()
 
     def recieve_message(self, messages, cur_turn):
-        # if not messages:
-        #     return
+        if not messages:
+            return
         if cur_turn > len(self.messages)-1:
             self.messages.append('')
-        splitted_messages = messages.split('/')
+        splitted_messages = messages.split('\n')
+        splitted_messages = [s for s in splitted_messages if s != '']
+        if '' in splitted_messages:
+            splitted_messages = splitted_messages.remove('')
+        
         for message in splitted_messages:
             self.messages[cur_turn] += '\n> ' + message
 
