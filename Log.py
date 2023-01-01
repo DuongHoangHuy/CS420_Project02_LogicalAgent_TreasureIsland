@@ -1,5 +1,6 @@
 import pygame
-from constant import WIN_W, WIN_H, MAP_H, MAP_W
+pygame.init()
+from helpers.constant import WIN_W, WIN_H, MAP_H, MAP_W
 from helpers.textrect import render_textrect
 
 LOG_W = 400
@@ -21,13 +22,14 @@ class Logger:
         print('Save logs successfully')
         f.close()
 
-    def recieve_message(self, message, cur_turn):
-        if not message:
-            return
-        if cur_turn > len(self.messages)-1: 
-            self.messages.append('> ' + message)
-        else:
-            self.messages[cur_turn] += '\n' + '> ' + message
+    def recieve_message(self, messages, cur_turn):
+        # if not messages:
+        #     return
+        if cur_turn > len(self.messages)-1:
+            self.messages.append('')
+        splitted_messages = messages.split('/')
+        for message in splitted_messages:
+            self.messages[cur_turn] += '\n> ' + message
 
     def draw(self, cur_turn, win):
         rendered_text = render_textrect(self.messages[cur_turn], self.font, self.area, (0,0,0), LOG_COLOR)

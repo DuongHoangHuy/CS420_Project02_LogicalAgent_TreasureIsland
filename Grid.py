@@ -1,27 +1,14 @@
 import pygame
+from helpers.constant import REGIONS, SEA
 pygame.init()
 
-AGENT = (198, 81, 97) #AGENT
-PIRATE = (214, 16, 16) #PIRATE
+AGENT = (198, 50, 135)#AGENT
 GOLD = (250, 211, 82) #GOLD
 
 MOUNTAIN = (0, 0, 0) # MOUNTAIN
 PRISON = (0, 0, 128) # PRISON
 
 MASKED = (128, 128, 128) # MASKED
-SEA = (61, 146, 194) # SEA
-C1 = (183, 169, 204)
-C2 = (140, 101, 134)
-C3 = (214, 172, 139)
-C4 = (98, 138, 113)
-C5 = (184, 155, 150)
-C6 = (160, 154, 86)
-C7 = (161, 128, 96)
-C8 = (189, 123, 55)
-C9 = (93, 115, 78)
-C10 = (168, 188, 172)
-
-REGIONS = [SEA, C1, C2, C3, C4, C5, C6, C7, C8, C9, C10]
 
 
 class Grid:
@@ -40,16 +27,16 @@ class Grid:
 	def set_region(self, region): # decide what region of the grid
 		entity = region[-1]
 		if entity == 'M' or entity == 'P':
-			self.region = REGIONS[int(region[:-1])]
+			self.region = int(region[:-1])
 			self.entity = entity
 		else:
-			self.region = REGIONS[int(region)]
+			self.region = int(region)
 
 	def get_pos(self):
 		return (self.row, self.col)
 	
 	def is_barrier(self):
-		if self.region == SEA or self.entity in ['M', 'P']:
+		if self.is_sea() or self.entity in ['M']:
 			return True
 		return False
 
@@ -59,15 +46,16 @@ class Grid:
 		return False
 	
 	def is_sea(self):
-		if self.region == SEA:
+		if self.region == 0:
 			return True
 		return False 
 		
 	def make_masked(self):
 		self.is_masked = True
+	
 
 	def draw(self, win, FONT):
-		region_color = self.region
+		region_color = REGIONS[self.region]
 		if self.is_masked:
 			region_color = MASKED
 		pygame.draw.rect(win, region_color, (self.x, self.y, self.width, self.height))
@@ -75,10 +63,6 @@ class Grid:
 		entity_color = (0,0,0)
 		if self.entity == 'T':
 			entity_color = GOLD
-		elif self.entity == 'A':
-			entity_color = AGENT
-		elif self.entity == 'Pi':
-			entity_color = PIRATE
 		elif self.entity == 'P':
 			entity_color = PRISON
 		elif self.entity == 'M':
@@ -93,5 +77,6 @@ class Grid:
 		return False
 
 
-# if __name__ = "__main__":
-    
+# if __name__ == "__main__":
+# 	grid = Grid(1,1,1,1, '0')
+# 	print(grid.is_sea())

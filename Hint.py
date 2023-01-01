@@ -1,7 +1,7 @@
 import random
 import numpy
-from Pirate import DIRECTIONS
-from Grid import REGIONS
+import math
+from helpers.constant import REGIONS, DIRECTIONS
 # Viết 2 hàm:
 # get_hint_(number): Trả về (message, data)
 # data là dữ liệu cần dùng để sử dụng để verify_hint
@@ -15,7 +15,7 @@ from Grid import REGIONS
 class Hint:
     def __init__(self, ID, get_hint, verify_hint):
         self.ID = None
-        self.Name = None
+        self.name = None
         self.message = None
         self.data = None
         self.verify_hint = verify_hint
@@ -26,10 +26,13 @@ class Hint:
         self.name = f'Hint {cur_turn}'
         self.message = res[0]
         self.data = res[1]
-        return self.name + ': ' + self.message
 
     def is_verified(self):
         return self.verify_hint(self.data)
+    
+    def get_hint_message(self):
+        return self.name + ': ' + self.message
+
 
 class Hint_Manager:
     def __init__(self, agent, pirate, treasure_loc, map):
@@ -37,36 +40,39 @@ class Hint_Manager:
         self.pirate = pirate
         self.treasure_loc = treasure_loc # tuple (row, col)
         self.map = map #self.map.map = 2D list of Grids
-        # self.map.Hints = [  Hint(1, self.get_hint_1, self.verify_hint_1),
-        #                     # Hint(2, self.get_hint_2, self.verify_hint_2),
-        #                     # Hint(3, self.get_hint_3, self.verify_hint_3)
-        #                     # Hint(4, self.get_hint_4, self.verify_hint_4)
-        #                     # Hint(5, self.get_hint_5, self.verify_hint_5),
-        #                     Hint(6, self.get_hint_6, self.verify_hint_6),
-        #                     # Hint(7, self.get_hint_7, self.verify_hint_7),
-        #                     # Hint(8, self.get_hint_8, self.verify_hint_8),
-        #                     Hint(9, self.get_hint_9, self.verify_hint_9),
-        #                     Hint(10, self.get_hint_10, self.verify_hint_10),
-        #                     # Hint(11, self.get_hint_11, self.verify_hint_11),
-        #                     Hint(12, self.get_hint_12, self.verify_hint_12),
-        #                     Hint(13, self.get_hint_13, self.verify_hint_13),
-        #                     Hint(14, self.get_hint_14, self.verify_hint_14),
-        #                     Hint(15, self.get_hint_15, self.verify_hint_15) ]
-        self.map.Hints = [Hint(14, self.get_hint_14, self.verify_hint_14)] #TEST HINT
+        self.map.Hints = [  Hint(1, self.get_hint_1, self.verify_hint_1),
+                            Hint(2, self.get_hint_2, self.verify_hint_2),
+                            Hint(3, self.get_hint_3, self.verify_hint_3),
+                            Hint(4, self.get_hint_4, self.verify_hint_4),
+                            Hint(5, self.get_hint_5, self.verify_hint_5),
+                            Hint(6, self.get_hint_6, self.verify_hint_6),
+                            Hint(7, self.get_hint_7, self.verify_hint_7),
+                            Hint(8, self.get_hint_8, self.verify_hint_8),
+                            Hint(9, self.get_hint_9, self.verify_hint_9),
+                            Hint(10, self.get_hint_10, self.verify_hint_10),
+                            Hint(11, self.get_hint_11, self.verify_hint_11),
+                            Hint(12, self.get_hint_12, self.verify_hint_12),
+                            Hint(13, self.get_hint_13, self.verify_hint_13),
+                            Hint(14, self.get_hint_14, self.verify_hint_14),
+                            Hint(15, self.get_hint_15, self.verify_hint_15) ]
+        # self.map.Hints = [Hint(7, self.get_hint_3, self.verify_hint_3)] #TEST HINT
 
     def get_random_hint(self, cur_turn):
         hint = None
         res = None
-        hint = random.choice(self.map.Hints)
-        # hint.read_hint(cur_turn)
-        # res = hint.is_verified()
-        # if cur_turn == 1:
-        #     while not res:
-        #         hint = random.choice(self.map.Hints)
-        #         res = hint.is_verified()
-        #     self.map.reset_map()
-
-        # res = hint.is_verified()
+        p_rare = 0.02
+        num_of_rare = 2
+        p_other = (1- num_of_rare*p_rare) / (15 - num_of_rare)
+        p_lst = [p_other, p_other, p_other, p_other, p_other, p_other, p_rare, p_other, p_other, p_other, p_other, p_rare, p_other, p_rare, p_other]
+        hint = random.choices(self.map.Hints, weights= p_lst, k = 1)[0]
+        hint.read_hint(cur_turn)
+        if cur_turn == 1:
+            res = hint.is_verified()
+            while not res:
+                hint = random.choice(self.map.Hints)
+                hint.read_hint(cur_turn)
+                res = hint.is_verified()
+            self.map.reset_map()
         return hint
     
     #HINT 1
@@ -92,7 +98,98 @@ class Hint_Manager:
         for loc in data:
             self.map.map[loc[0]][loc[1]].make_masked()
         return True
+
+    #HINT 2: 2-5 regions that 1 of them has the treasure.
+    def get_hint_2(self):
+        random_num = random.randint(2, 5)
+        random_regions = random.choices(range(1, self.map.R), k = random_num)
+        message = f'{random_regions} that 1 of them has the treasure'
+        return (message, random_regions)
+
+    def verify_hint_2(self, data):
+        random_regions =  data
+        t_row, t_col = self.treasure_loc
+        t_region = self.map.map[t_row][t_col].region
+        if t_region in random_regions:
+            for row in range(self.map.H):
+                for col in range(self.map.W):
+                    if self.map.map[row][col].region not in random_regions:
+                        self.map.map[row][col].make_masked()
+            return True
+
+        for row in range(self.map.H):
+            for col in range(self.map.W):
+                if self.map.map[row][col].region in random_regions:
+                    self.map.map[row][col].make_masked()
+        return False
     
+    # HINT 3: 1-3 regions that do not contain the treasure.
+    def get_hint_3(self):
+        random_num = random.randint(1, 3)
+        random_regions = random.choices(range(1, self.map.R), k = random_num)
+        message = f'Regions {random_regions} do not contain the treasure'
+        return (message, random_regions)
+
+    def verify_hint_3(self, data):
+        random_regions =  data
+        t_row, t_col = self.treasure_loc
+        t_region = self.map.map[t_row][t_col].region
+        if t_region in random_regions:
+            for row in range(self.map.H):
+                for col in range(self.map.W):
+                    if self.map.map[row][col].region not in random_regions:
+                        self.map.map[row][col].make_masked()
+            return False
+
+        for row in range(self.map.H):
+            for col in range(self.map.W):
+                if self.map.map[row][col].region in random_regions:
+                    self.map.map[row][col].make_masked()
+        return True
+
+    #HINT 4: A large rectangle area that has the treasure.
+    def get_hint_4(self):
+        size = size = self.map.H // 4
+        random_loc = (random.randint(0, self.map.H-size-1), random.randint(0, self.map.W-size-1))
+        message = f'A large rectangle area {random_loc[0], random_loc[1], random_loc[0] + size, random_loc[1] + size} that has the treasure'
+        return ( message, (random_loc[0], random_loc[1], random_loc[0] + size, random_loc[1] + size))
+        
+    def verify_hint_4(self, data):
+        top, left, bot, right = data
+        if self.treasure_loc[0] in range(top, bot+1) and self.treasure_loc[1] in range(left, right+1):
+            for row in range(self.map.H):
+                for col in range(self.map.W):
+                    if row not in range(top, bot+1) or col not in range(left, right+1):
+                        self.map.map[row][col].make_masked()
+            return True
+        for row in range(top, bot+1):
+            for col in range(left, right+1):
+                self.map.map[row][col].make_masked()
+        return False
+
+    #HINT 5: A small rectangle area that doesn't has the treasure.
+    def get_hint_5(self):
+        size = self.map.H // 8
+        random_loc = (random.randint(0, self.map.H-size-1), random.randint(0, self.map.W-size-1))
+        message = f'A small rectangle area {random_loc[0], random_loc[1], random_loc[0] + size, random_loc[1] + size} that doesn not have the treasure'
+        return ( message, (random_loc[0], random_loc[1], random_loc[0] + size, random_loc[1] + size))
+        
+    def verify_hint_5(self, data):
+        top, left, bot, right = data
+        if self.treasure_loc[0] in range(top, bot+1) and self.treasure_loc[1] in range(left, right+1):
+            for row in range(self.map.H):
+                for col in range(self.map.W):
+                    if row not in range(top, bot+1) or col not in range(left, right+1):
+                        self.map.map[row][col].make_masked()
+            return False
+
+        for row in range(top, bot+1):
+            for col in range(left, right+1):
+                self.map.map[row][col].make_masked()
+        return True
+
+    # HINT 6:He tells you that you are the nearest person to the treasure (between 
+    #  you and the prison he is staying).
     def get_hint_6(self):
         message = "Agent is the nearest person to the treasure"
         return [message, None]
@@ -115,104 +212,79 @@ class Hint_Manager:
         return res
 
     # HINT 7: A column and/or a row that contain the treasure (rare).
-    # distribution: col = row = 0.45, both = 0.1
     def get_hint_7(self):
         row, col = (random.randrange(0, self.map.H), random.randrange(0, self.map.W))
         choose = random.choice([0, 1, 2])
-        print(choose)
         if choose == 0:
-            message = "Row " + str(row) + " contains the treasure"
-        if choose == 1:
-            message = "Col " + str(col) + " contains the treasure"
+            message = f'Row {row} contains the treasure'
+        elif choose == 1:
+            message = f'Column {col} contains the treasure'
         else:
-            message = "Tile " + str((row, col)) + " contains the treasure"
+            message = f'Row {row} and column {col} contains the treasure'
 
         return (message, [choose, (row, col)])
 
     def verify_hint_7(self, data):
         choose = data[0]
         row, col = data[1]
-        if choose == 0: # row only
-            if self.treasure_loc[0] == row:
-                for r in range(self.map.H):
-                    if r != row:
-                        for c in range(self.map.W):
-                           self.map.map[r][c].make_masked()
-                return True
-            else:
+
+        grids = []
+        if choose == 0 or choose == 2:
+            for c in range(self.map.W):
+                grids.append((row, c))
+
+        if choose == 1 or choose == 2:
+            for r in range(self.map.H):
+                grids.append((r, col))
+        
+        if self.treasure_loc in grids:
+            for r in range(self.map.H):
                 for c in range(self.map.W):
-                   self.map.map[row][c].make_masked()
-
-        if choose == 1: # col only
-            if self.treasure_loc[1] == col:
-                for c in range(0, self.map.W):
-                    if c != col:
-                        for r in range(0, self.map.H):
-                           self.map.map[r][c].make_masked()
-                return True
-            else:
-                for r in range(0, self.map.H):
-                    self.map.map[r][col].make_masked()
-
-        if choose == 2: # both 
-            if self.treasure_loc[0] == row and self.treasure_loc[1] == col:
-                # neu tim dc vi tri treasure r thi nen lm j o day?
-                return True
-            else:
-                self.map.map[row][col].make_masked()
-
+                    if (r, c) not in grids:
+                        self.map.map[r][c].make_masked()
+            return True
+        
+        for grid in grids:
+            self.map.map[grid[0]][grid[1]].make_masked()
         return False
 
 
     # HINT 8: A column and/or a row that do not contain the treasure.
-    # distribution: col = row = 0.25, both = 0.5
     def get_hint_8(self):
-        loc = (0, 0)
-        while loc == (0, 0):
-            loc = (random.randrange(0, self.map.H), random.randrange(0, self.map.W))
-        choose = numpy.random.choice(numpy.arange(0, 3), p=[0.25, 0.25, 0.5])
+        row, col = (random.randrange(0, self.map.H), random.randrange(0, self.map.W))
+        choose = random.choice([0, 1, 2])
         if choose == 0:
-            message = "Row " + str(loc[0]) + " does not contain the treasure"
+            message = f'Row {row} does not contain the treasure'
         if choose == 1:
-            message = "Col " + str(loc[1]) + " does not contain the treasure"
+            message = f'Column {col} does not contain the treasure'
         else:
-            message = "Tile " + str(loc) + " does not contain the treasure"
-        loc += (choose, -1)
-        return (message, loc)
+            message = f'Row {row} and column {col} do not contain the treasure'
+
+        return (message, [choose, (row, col)])
 
     def verify_hint_8(self, data):
-        if data[2] == 0: # row only
-            # mask
-            if self.treasure_loc[0] != data[0]:
-                for c in range(0, self.map.W):
-                   self.map.map[data[0]][c].make_masked()
-                return True
-            else:
-                for r in range(0, self.map.H):
-                    if r != data[0]:
-                        for c in range(0, self.map.W):
-                           self.map.map[r][c].make_masked()
+        choose = data[0]
+        row, col = data[1]
 
-        elif data[2] == 1: # col only
-            if self.treasure_loc[1] != data[1]:
-                for r in range(0, self.map.H):
-                   self.map.map[r][data[1]].make_masked()
-                return True
-            else:
-                for c in range(0, self.map.W):
-                    if c != data[1]:
-                        for r in range(0, self.map.H):
-                           self.map.map[r][c].make_masked()
+        grids = []
+        if choose == 0 or choose == 2:
+            for c in range(self.map.W):
+                grids.append((row, c))
 
-        elif data[2] == 2: # both 
-            if self.treasure_loc[0] != data[0] and self.treasure_loc[1] != data[1]:
-               self.map.map[data[0]][data[1]].make_masked()
-               return True
-            else:
-                # neu tim dc vi tri treasure r thi nen lm j o day?
-                print("hmm")
-
-        return False
+        if choose == 1 or choose == 2:
+            for r in range(self.map.H):
+                grids.append((r, col))
+        
+        if self.treasure_loc in grids:
+            for r in range(self.map.H):
+                for c in range(self.map.W):
+                    if (r, c) not in grids:
+                        self.map.map[r][c].make_masked()
+            return False
+        
+        for grid in grids:
+            self.map.map[grid[0]][grid[1]].make_masked()
+        return True
     
     #HINT 9
     def get_nb_regions(self):
@@ -225,8 +297,8 @@ class Hint_Manager:
                         nb_row = row + direct[0]
                         nb_col = col + direct[1]
                         if nb_row in range(self.map.H) and nb_col in range(self.map.W):
-                            nb_region = REGIONS.index(self.map.map[nb_row][nb_col].region)
-                            cur_region = REGIONS.index(cur_grid.region)
+                            nb_region = self.map.map[nb_row][nb_col].region
+                            cur_region = cur_grid.region
                             if nb_region is not cur_region and nb_region is not 0 and nb_region not in nb_regions[cur_region-1]:
                                 nb_regions[cur_region-1].append(nb_region)
         
@@ -297,12 +369,33 @@ class Hint_Manager:
 
     #HINT 11: The treasure is somewhere in an area bounded by 2-3 tiles from sea.
     def get_hint_11(self):
-        quantity = random.randint(2, 3)
-        message = "The treasure is somewhere in an area bounded by " + str(quantity) + " tiles from sea"
-        return (message, quantity)
+        distance = random.randint(2, 3)
+        message = f'The treasure is somewhere in an area bounded by {distance} tiles from sea'
+        return (message, distance)
 
     def verify_hint_11(self, data):
-        print("jml")
+        distance = data
+        grids = []
+        for row in range(self.map.H):
+            for col in range(self.map.W):
+                if self.map.map[row][col].is_sea():
+                    for direct in DIRECTIONS:
+                        for i in range(1, distance+1):
+                            nb_grid = (row + i*direct[0], col +  i*direct[1])
+                            if nb_grid[0] in range(self.map.H) and nb_grid[1] in range(self.map.W) and not self.map.map[nb_grid[0]][nb_grid[1]].is_sea():
+                                grids.append(nb_grid)
+
+        if self.treasure_loc not in grids:
+            for grid in grids:
+                self.map.map[grid[0]][grid[1]].make_masked()
+            return False
+        
+        for row in range(self.map.H):
+            for col in range(self.map.W):
+                if (row, col) not in grids:
+                    self.map.map[row][col].make_masked()
+        return True
+
 
     #HINT 12: A half of the map without treasure (rare).
     def get_hint_12(self):
@@ -458,19 +551,19 @@ class Hint_Manager:
         for row in range(0, self.map.H):
             for col in range(0, self.map.W):
                 if self.map.map[row][col].is_mountain():
-                    regions[REGIONS.index(self.map.map[row][col].region)-1] = True
+                    regions[self.map.map[row][col].region-1] = True
         
-        t_region = REGIONS.index(self.map.map[self.treasure_loc[0]][self.treasure_loc[1]].region)
+        t_region = self.map.map[self.treasure_loc[0]][self.treasure_loc[1]].region
         if regions[t_region-1]:
             for row in range(0, self.map.H):
                 for col in range(0, self.map.W):
-                    if not self.map.map[row][col].is_sea() and not regions[REGIONS.index(self.map.map[row][col].region)-1]:
+                    if not self.map.map[row][col].is_sea() and not regions[self.map.map[row][col].region-1]:
                         self.map.map[row][col].make_masked()
             return True
         
         for row in range(0, self.map.H):
             for col in range(0, self.map.W):
-                if not self.map.map[row][col].is_sea() and regions[REGIONS.index(self.map.map[row][col].region)-1]:
+                if not self.map.map[row][col].is_sea() and regions[self.map.map[row][col].region-1]:
                     self.map.map[row][col].make_masked()
         return False
                     
